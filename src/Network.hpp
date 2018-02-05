@@ -27,11 +27,13 @@ static std::mt19937 gen(rd());
 class Network
 {
 private:
-	double learningRate_;
+	double eta_;	// learning rate
 	std::array<Matrice, _NB_LAYERS_ - 1> weights_;
 	Matrice neurons_;
 	unsigned int iterations_tot_;
 	std::vector<int> correctOutputs_;
+	Matrice deltas_;		
+	double delta_final_;
 	
 public:
 	Matrice getActivations() const;
@@ -44,6 +46,7 @@ public:
 	double prodScal(const std::vector<double>& tab1, const std::vector<double>& tab2) const;
 	void afficheVect(const Layer& tab) const;
 	void afficheMatrice(const Matrice& mat) const;
+	void afficheWeights() const;
 	
 	void generateTrainingDataSet() const;
 	void buildRandomWeights();
@@ -52,8 +55,13 @@ public:
 	
 	void update();
 	void activateLayer(int index, const std::vector<double>& inputs);
+	
+	//-----BackPropagation-----------
+	void calculateDeltas();
+	void deltaLayer(int index);
+	void updateWeights();
 
-	Network(unsigned int iterations_tot = 10, double learningRate = 0.1);
+	Network(unsigned int iterations_tot = 100, double learningRate = 0.5);
 	~Network();
 };
 

@@ -28,12 +28,10 @@ std::ostream& operator<<(std::ostream& sortie, const Matrice& matrice)
 int main()
 {
 	try{
-		Network net;
+		Network net(10000, 0.7);
 		net.generateTrainingDataSet();
-		/*
-		net.loadWeightsFile("weightsFile");
-		*/
 		net.update();
+		net.afficheWeights();
 
 	}
 	catch(std::string e){

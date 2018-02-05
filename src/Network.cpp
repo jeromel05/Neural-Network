@@ -52,6 +52,20 @@ double Network::prodScal(const std::vector<double>& tab1, const std::vector<doub
 return res;
 }
 
+void Network::afficheWeights() const
+{
+	for(size_t i(0); i < weights_.size(); ++i){
+		for(size_t j(0); j < weights_[i].size(); ++j){
+			for(size_t k(0); k < weights_[i][j].size(); ++k){
+				std::cout << weights_[i][j][k] << '\t';
+			}
+			std::cout << std::endl;
+		}
+		std::cout << "nouvelle dimension" << std::endl;
+	}				
+}
+
+
 void Network::afficheMatrice(const Matrice& mat) const
 {
 	for(auto layer: mat){
@@ -74,7 +88,7 @@ void Network::generateTrainingDataSet() const
 
 	double total(0.0);
 	double temp(0.0);
-	std::uniform_int_distribution<> dist(-10, 10);
+	std::uniform_int_distribution<> dist(0, 1);
 	
 	for(size_t i(0); i < iterations_tot_; ++i){
 		for(size_t j(0); j < 2; ++j){
@@ -83,7 +97,7 @@ void Network::generateTrainingDataSet() const
 			out << temp << " ";
 		}
 		out << "=";
-			if(total >= 10){
+			if(total >= 2){
 				out << 1;
 			}else{
 				out << 0;
@@ -96,7 +110,7 @@ void Network::generateTrainingDataSet() const
 
 void Network::buildRandomWeights()
 {
-	std::uniform_real_distribution<double> d(-1.0,1.0);
+	std::uniform_real_distribution<double> d(-0.5,0.5);
 	Matrice temp1;
 	Layer temp2;
 	
@@ -111,40 +125,8 @@ void Network::buildRandomWeights()
 		
 		weights_[h] = temp1;
 		temp1.clear();
-	}
-	
-	for(auto a: weights_){
-		afficheMatrice(a);
-		std::cout << "weights sheet" << std::endl;
-	}
-		
+	}	
 }
-
-/*
-std::vector<double> Network::computeError(std::ifstream& fichier) const
-{
-	std::vector<double> res;
-	std::string line;
-
-	fichier.ignore(100, '=');
-		for(size_t i(0); i < 3; ++i){
-
-			getline(fichier, line, ',');
-			res.push_back(stod(line));
-			if(res[i] < 0){
-				throw error + std::string(_NEGATIVE_ARGUMENT_);
-			}
-			line.clear();
-		}
-	return res;
-}
-
-	if(!checkActivationBounds(res)){
-		throw "Correct output at position " << i << " is out of bounds";
-	}
-	return res;
-}
-*/
 
 std::vector<double> Network::readInput(std::ifstream& inputFile)
 {
@@ -174,6 +156,8 @@ void Network::update()
 		if(inputFile.fail()) {
 			throw "Failed to open inputFile";
 		}
+	std::ofstream errors;
+	errors.open("../data/final_errors.txt");
 		
 	for(size_t h(0); h < iterations_tot_; ++h){
 		std::vector<double> inputs(readInput(inputFile));
@@ -185,16 +169,52 @@ void Network::update()
 					}
 					std::cout << "out: " << '\t' << correctOutputs_[h];
 					std::cout << std::endl;
-				
 			*/
 		for(size_t i(0); i < neurons_.size() - 1; ++i){
 			activateLayer(i, inputs);
 		}
 		afficheMatrice(neurons_);
-		//computeOutput(); 
+		delta_final_ = correctOutputs_[h] - neurons_[_NB_LAYERS_ - 1][0];
+			errors << delta_final_ << '\n';
+		
+		std::cout << "delta_final: " << delta_final_ << std::endl;
+		calculateDeltas();
+		afficheMatrice(deltas_);
+		updateWeights();
 	}
+	
+	errors.close();
 	inputFile.close();
 }
+
+void Network::calculateDeltas()
+{
+	for(size_t i(_NB_LAYERS_ - 1); i > 1 ; --i){	//layer 0 is input layer so no need to compute deltas
+			deltaLayer(i);
+	}
+}
+
+void Network::deltaLayer(int index)
+{
+	Layer temp_tab;
+	Layer tab1;
+	
+	if(index >= _NB_LAYERS_ - 1){														
+		tab1.push_back(delta_final_);
+		deltas_[index][0] = delta_final_;											
+	}else{
+		tab1 = deltas_[index];						
+	}
+	
+	for(size_t i(0); i < neurons_[index - 1].size(); ++i){	
+		for(size_t j(0); j < neurons_[index].size(); ++j){	
+			temp_tab.push_back(weights_[index - 1][j][i]);
+		}
+		deltas_[index - 1][i] = prodScal(tab1, temp_tab);
+		//std::cerr << "tailles " << tab1.size() << " part " << temp_tab.size() << std::endl;
+		temp_tab.clear();
+	}
+}	
 
 void Network::activateLayer(int index, const std::vector<double>& inputs)
 {
@@ -210,16 +230,29 @@ void Network::activateLayer(int index, const std::vector<double>& inputs)
 		neurons_[index + 1][i] = sigmoid(prodScal(tab1,  weights_[index][i]));
 	}
 }
+
+void Network::updateWeights()
+{
+	for(size_t i(0); i < weights_.size(); ++i){
+		for(size_t j(0); j < weights_[i].size(); ++j){
+			for(size_t k(0); k < weights_[i][j].size(); ++k){
+				weights_[i][j][k] += eta_ * deltas_[i + 1][j] * deriveeSigmoid(neurons_[i + 1][j]) * neurons_[i][k]; // + 1  car 1er layer est input -> pas de delta
+			}
+		}
+	}
+}
 	
 
 Network::Network(unsigned int iterations_tot, double learningRate)
-:learningRate_(learningRate), iterations_tot_(iterations_tot)
+:eta_(learningRate), iterations_tot_(iterations_tot)
 {
 	neurons_.push_back({0.0, 0.0});
 	neurons_.push_back({0.0, 0.0, 0.0});
 	neurons_.push_back({0.0, 0.0});
 	neurons_.push_back({0.0});
 	buildRandomWeights();
+	deltas_ = neurons_;
+	afficheWeights();
 }
 
 Network::~Network()
