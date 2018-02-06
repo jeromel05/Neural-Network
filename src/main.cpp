@@ -28,11 +28,9 @@ std::ostream& operator<<(std::ostream& sortie, const Matrice& matrice)
 int main()
 {
 	try{
-		Network net(10000, 0.7);
+		Network net(2000, 0.7);
 		net.generateTrainingDataSet();
-		net.update();
-		net.afficheWeights();
-
+		net.run();
 	}
 	catch(std::string e){
 		std::cerr << "Error: " << e << std::endl;

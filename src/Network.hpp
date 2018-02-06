@@ -13,13 +13,14 @@
 
 #define _NB_LAYERS_ 4 													//counting input and output layer
 #define _NB_INPUTS_ 2
-#define _NB_NEURONS1_ 3
-#define _NB_NEURONS2_ 2
+#define _NB_NEURONS1_ 100
+#define _NB_NEURONS2_ 70
 #define _NB_OUTPUTS_ 1
 
 typedef double Neuron;
 typedef std::vector<double> Layer;
 typedef std::vector<std::vector<double> > Matrice;
+typedef std::array<std::vector<double>, _NB_LAYERS_> MatriceFixe;
 
 static std::random_device rd;
 static std::mt19937 gen(rd());
@@ -29,14 +30,14 @@ class Network
 private:
 	double eta_;	// learning rate
 	std::array<Matrice, _NB_LAYERS_ - 1> weights_;
-	Matrice neurons_;
+	MatriceFixe neurons_;
 	unsigned int iterations_tot_;
 	std::vector<int> correctOutputs_;
-	Matrice deltas_;		
+	MatriceFixe deltas_;		
 	double delta_final_;
 	
 public:
-	Matrice getActivations() const;
+	MatriceFixe getActivations() const;
 	std::vector<int> getCorrectOutput() const;
 	double sigmoid(double valeur) const;
 	double deriveeSigmoid(double valeur) const;
@@ -46,14 +47,17 @@ public:
 	double prodScal(const std::vector<double>& tab1, const std::vector<double>& tab2) const;
 	void afficheVect(const Layer& tab) const;
 	void afficheMatrice(const Matrice& mat) const;
+	void afficheMatrice(const MatriceFixe& mat) const;
 	void afficheWeights() const;
+	void writeWeights(std::ostream& out) const;
 	
 	void generateTrainingDataSet() const;
 	void buildRandomWeights();
 	std::vector<double> readInput(std::ifstream& inputFile);
 	std::vector<double> computeError(std::ifstream& fichier) const;
 	
-	void update();
+	void run();
+	void update(std::ifstream& inputFile, std::ofstream& errorsFile, std::ofstream& weightsFile, int step);
 	void activateLayer(int index, const std::vector<double>& inputs);
 	
 	//-----BackPropagation-----------

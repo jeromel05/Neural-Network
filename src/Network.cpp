@@ -1,6 +1,6 @@
 #include "Network.hpp"
 
-Matrice Network::getActivations() const
+MatriceFixe Network::getActivations() const
 {
 	return neurons_;
 }
@@ -73,6 +73,13 @@ void Network::afficheMatrice(const Matrice& mat) const
 	}
 }
 
+void Network::afficheMatrice(const MatriceFixe& mat) const
+{
+	for(auto layer: mat){
+		afficheVect(layer);
+	}
+}
+
 void Network::afficheVect(const Layer& tab) const
 {
 	for(auto i: tab){
@@ -106,6 +113,19 @@ void Network::generateTrainingDataSet() const
 		total = 0.0;
 	}
 	out.close();
+}
+
+void Network::writeWeights(std::ostream& out) const
+{
+	for(size_t i(0); i < weights_.size(); ++i){
+		for(size_t j(0); j < weights_[i].size(); ++j){
+			for(size_t k(0); k < weights_[i][j].size(); ++k){
+				out << weights_[i][j][k] << '\t';
+			}
+			out << '\n';
+		}
+		out << "nouvelle dimension" << '\n';
+	}		
 }
 
 void Network::buildRandomWeights()
@@ -148,7 +168,7 @@ std::vector<double> Network::readInput(std::ifstream& inputFile)
 	return res;
 }
 
-void Network::update()
+void Network::run()
 {
 	std::string filePath("../data/trainingDataSet.txt");
 	std::ifstream inputFile;
@@ -156,41 +176,42 @@ void Network::update()
 		if(inputFile.fail()) {
 			throw "Failed to open inputFile";
 		}
-	std::ofstream errors;
-	errors.open("../data/final_errors.txt");
+		
+	std::ofstream errorsFile;
+	errorsFile.open("../data/final_errors.txt");
+	std::ofstream weightsFile;
+	weightsFile.open("../data/weights.txt");
+	
+	std::cout << "Simulation is running..." << std::endl;
 		
 	for(size_t h(0); h < iterations_tot_; ++h){
-		std::vector<double> inputs(readInput(inputFile));
-		std::cout << "Iteration " << h << std::endl;
-			/*
-				std::cout << " in: " << '\t';
-					for(auto i: inputs){
-						std::cout << i << '\t';
-					}
-					std::cout << "out: " << '\t' << correctOutputs_[h];
-					std::cout << std::endl;
-			*/
-		for(size_t i(0); i < neurons_.size() - 1; ++i){
-			activateLayer(i, inputs);
-		}
-		afficheMatrice(neurons_);
-		delta_final_ = correctOutputs_[h] - neurons_[_NB_LAYERS_ - 1][0];
-			errors << delta_final_ << '\n';
-		
-		std::cout << "delta_final: " << delta_final_ << std::endl;
-		calculateDeltas();
-		afficheMatrice(deltas_);
-		updateWeights();
+		update(inputFile, errorsFile, weightsFile, h);
 	}
 	
-	errors.close();
+	writeWeights(weightsFile);
+	weightsFile.close();
+	errorsFile.close();
 	inputFile.close();
+}
+
+void Network::update(std::ifstream& inputFile, std::ofstream& errorsFile, std::ofstream& weightsFile, int step)
+{
+	std::vector<double> inputs(readInput(inputFile));
+
+	for(size_t i(0); i < neurons_.size() - 1; ++i){
+		activateLayer(i, inputs);
+	}
+	delta_final_ = correctOutputs_[step] - neurons_[_NB_LAYERS_ - 1][0];
+		errorsFile << delta_final_ << '\n';
+		
+	calculateDeltas();
+	updateWeights();
 }
 
 void Network::calculateDeltas()
 {
 	for(size_t i(_NB_LAYERS_ - 1); i > 1 ; --i){	//layer 0 is input layer so no need to compute deltas
-			deltaLayer(i);
+		deltaLayer(i);
 	}
 }
 
@@ -246,13 +267,17 @@ void Network::updateWeights()
 Network::Network(unsigned int iterations_tot, double learningRate)
 :eta_(learningRate), iterations_tot_(iterations_tot)
 {
-	neurons_.push_back({0.0, 0.0});
-	neurons_.push_back({0.0, 0.0, 0.0});
-	neurons_.push_back({0.0, 0.0});
-	neurons_.push_back({0.0});
+	neurons_[0] = {0.0, 0.0};
+	for(size_t i(0); i < _NB_NEURONS1_; ++i){
+			neurons_[1].push_back(0.0);
+		}
+	for(size_t j(0); j < _NB_NEURONS2_; ++j){
+			neurons_[2].push_back(0.0);
+		}
+	neurons_[3] = {0.0};
+	
 	buildRandomWeights();
 	deltas_ = neurons_;
-	afficheWeights();
 }
 
 Network::~Network()
