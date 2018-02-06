@@ -187,6 +187,7 @@ void Network::run()
 	for(size_t h(0); h < iterations_tot_; ++h){
 		update(inputFile, errorsFile, weightsFile, h);
 	}
+	std::cout << std::endl;
 	
 	writeWeights(weightsFile);
 	weightsFile.close();
@@ -206,6 +207,23 @@ void Network::update(std::ifstream& inputFile, std::ofstream& errorsFile, std::o
 		
 	calculateDeltas();
 	updateWeights();
+	displayLoadingBar(step);
+	
+}
+
+void Network::displayLoadingBar(int i) const
+{
+	double progress(i / (double)iterations_tot_);
+    int barWidth(70);
+
+    std::cout << "[";
+    int pos = barWidth * progress;
+    for (size_t i (0); i < barWidth; ++i) {
+        if (i <= pos) std::cout << "=";
+        else std::cout << " ";
+    }
+    std::cout << "] " << (progress * 100.0) << "%\r";
+	std::cout.flush();     
 }
 
 void Network::calculateDeltas()

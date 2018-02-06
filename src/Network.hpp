@@ -10,6 +10,8 @@
 #include <random>
 #include <sstream>
 #include <array>
+#include <stdio.h>
+#include <unistd.h>
 
 #define _NB_LAYERS_ 4 													//counting input and output layer
 #define _NB_INPUTS_ 2
@@ -48,6 +50,7 @@ public:
 	void afficheVect(const Layer& tab) const;
 	void afficheMatrice(const Matrice& mat) const;
 	void afficheMatrice(const MatriceFixe& mat) const;
+	void displayLoadingBar(int i) const;
 	void afficheWeights() const;
 	void writeWeights(std::ostream& out) const;
 	
