@@ -115,18 +115,32 @@ void Network::generateTrainingDataSet() const
 	out.close();
 }
 
-void Network::writeWeights(std::ostream& out) const
-{
+void Network::writeWeights(std::vector<std::ofstream>& out, int step) const
+{	
 	for(size_t i(0); i < weights_.size(); ++i){
-		for(size_t j(0); j < weights_[i].size(); ++j){
-			for(size_t k(0); k < weights_[i][j].size(); ++k){
-				out << weights_[i][j][k] << '\t';
-			}
-			out << '\n';
-		}
-		out << "nouvelle dimension" << '\n';
-	}		
+		writeSingleWeight(out[i], i, step);
+	}
 }
+
+void Network::writeSingleWeight(std::ostream& out, int layer, int step) const
+{
+	// | entre les valeurs, * entre les lignes, \n entre les époques
+	assert(layer >= 0 and layer < weights_.size() and step >= 0);
+	
+	for(size_t j(0); j < weights_[layer].size(); ++j){
+			for(size_t k(0); k < weights_[layer][j].size(); ++k){
+				if(k < weights_[layer][j].size() - 1){
+					 out << weights_[layer][j][k] << '|';
+				}else{
+					out << weights_[layer][j][k];
+				}
+			}
+			if(j < weights_[layer].size() - 1){
+				out << '*';
+			}
+		}
+	out << '\n';
+}	
 
 void Network::buildRandomWeights()
 {
@@ -179,23 +193,34 @@ void Network::run()
 		
 	std::ofstream errorsFile;
 	errorsFile.open("../data/final_errors.txt");
-	std::ofstream weightsFile;
-	weightsFile.open("../data/weights.txt");
+	
+	std::ofstream out1;
+	out1.open("../data/weights1.txt");
+	std::ofstream out2;
+	out2.open("../data/weights2.txt");
+	std::ofstream out3;
+	out3.open("../data/weights3.txt");
+	
+	std::vector<std::ofstream> weightFiles;
+	weightFiles.push_back(std::move(out1));								// Impossible de push back un std::ofstream car pas de copie permise
+	weightFiles.push_back(std::move(out2));
+	weightFiles.push_back(std::move(out3));
 	
 	std::cout << "Simulation is running..." << std::endl;
 		
 	for(size_t h(0); h < iterations_tot_; ++h){
-		update(inputFile, errorsFile, weightsFile, h);
+		update(inputFile, errorsFile, weightFiles, h);
 	}
 	std::cout << std::endl;
 	
-	writeWeights(weightsFile);
-	weightsFile.close();
+	out1.close();
+	out2.close();
+	out3.close();
 	errorsFile.close();
 	inputFile.close();
 }
 
-void Network::update(std::ifstream& inputFile, std::ofstream& errorsFile, std::ofstream& weightsFile, int step)
+void Network::update(std::ifstream& inputFile, std::ofstream& errorsFile, std::vector<std::ofstream>& weightFiles, int step)
 {
 	std::vector<double> inputs(readInput(inputFile));
 
@@ -207,8 +232,8 @@ void Network::update(std::ifstream& inputFile, std::ofstream& errorsFile, std::o
 		
 	calculateDeltas();
 	updateWeights();
-	displayLoadingBar(step);
-	
+	writeWeights(weightFiles, step);
+	displayLoadingBar(step + 1);
 }
 
 void Network::displayLoadingBar(int i) const
@@ -222,7 +247,7 @@ void Network::displayLoadingBar(int i) const
         if (i <= pos) std::cout << "=";
         else std::cout << " ";
     }
-    std::cout << "] " << (progress * 100.0) << "%\r";
+    std::cout << "] " << progress * 100.0 << "%\r";
 	std::cout.flush();     
 }
 

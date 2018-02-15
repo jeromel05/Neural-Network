@@ -15,8 +15,8 @@
 
 #define _NB_LAYERS_ 4 													//counting input and output layer
 #define _NB_INPUTS_ 2
-#define _NB_NEURONS1_ 100
-#define _NB_NEURONS2_ 70
+#define _NB_NEURONS1_ 3
+#define _NB_NEURONS2_ 2
 #define _NB_OUTPUTS_ 1
 
 typedef double Neuron;
@@ -52,7 +52,8 @@ public:
 	void afficheMatrice(const MatriceFixe& mat) const;
 	void displayLoadingBar(int i) const;
 	void afficheWeights() const;
-	void writeWeights(std::ostream& out) const;
+	void writeWeights(std::vector<std::ofstream>& out, int step) const;
+	void writeSingleWeight(std::ostream& out, int layer, int step) const;
 	
 	void generateTrainingDataSet() const;
 	void buildRandomWeights();
@@ -60,7 +61,7 @@ public:
 	std::vector<double> computeError(std::ifstream& fichier) const;
 	
 	void run();
-	void update(std::ifstream& inputFile, std::ofstream& errorsFile, std::ofstream& weightsFile, int step);
+	void update(std::ifstream& inputFile, std::ofstream& errorsFile, std::vector<std::ofstream>& weightFiles, int step);
 	void activateLayer(int index, const std::vector<double>& inputs);
 	
 	//-----BackPropagation-----------
