@@ -136,7 +136,7 @@ void Network::writeSingleWeight(std::ostream& out, int layer, int step) const
 				}
 			}
 			if(j < weights_[layer].size() - 1){
-				out << '*';
+				out << '|';			//temporairement un | mais normalement on mettra un * entre les connections arrivant à chaque neurone séparé
 			}
 		}
 	out << '\n';
@@ -234,6 +234,7 @@ void Network::update(std::ifstream& inputFile, std::ofstream& errorsFile, std::v
 	updateWeights();
 	writeWeights(weightFiles, step);
 	displayLoadingBar(step + 1);
+	//afficheWeights();
 }
 
 void Network::displayLoadingBar(int i) const
