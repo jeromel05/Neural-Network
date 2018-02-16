@@ -43,3 +43,7 @@ CTestTestfile.cmake
 
 build/*
 data/*
+.DS_Store
+*.pyc
+src/DS_Store
+
