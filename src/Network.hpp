@@ -13,10 +13,9 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#define _NB_LAYERS_ 4 													//counting input and output layer
+#define _NB_LAYERS_ 3 													//counting input and output layer
 #define _NB_INPUTS_ 2
-#define _NB_NEURONS1_ 3
-#define _NB_NEURONS2_ 2
+#define _NB_NEURONS1_ 1000
 #define _NB_OUTPUTS_ 1
 
 typedef double Neuron;
@@ -39,11 +38,14 @@ private:
 	double delta_final_;
 	
 public:
+	//---------Utilities--------------
 	MatriceFixe getActivations() const;
 	std::vector<int> getCorrectOutput() const;
 	double sigmoid(double valeur) const;
 	double deriveeSigmoid(double valeur) const;
 	bool checkActivationBounds(double valeur) const;
+	int classToInt(char cla) const;
+	char intToClass(int i) const;
 	
 	std::vector<double> prodElement(const std::vector<double>& tab1, const std::vector<double>& tab2) const;
 	double prodScal(const std::vector<double>& tab1, const std::vector<double>& tab2) const;
@@ -62,7 +64,7 @@ public:
 	
 	void run();
 	void update(std::ifstream& inputFile, std::ofstream& errorsFile, std::vector<std::ofstream>& weightFiles, int step);
-	void activateLayer(int index, const std::vector<double>& inputs);
+	void activateLayer(int index);
 	
 	//-----BackPropagation-----------
 	void calculateDeltas();

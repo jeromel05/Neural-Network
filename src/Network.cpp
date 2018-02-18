@@ -32,6 +32,34 @@ bool Network::checkActivationBounds(double valeur) const
 	}
 }
 
+int Network::classToInt(char cla) const
+{
+	switch(cla){
+		case 'L':
+			return -1;
+		case 'B':
+			return 0;
+		case 'R':
+			return 1;
+		default:
+			return 0;
+	}	
+}
+
+char Network::intToClass(int i) const
+{
+	switch(i){
+		case -1:
+			return 'L';
+		case 0:
+			return 'B';
+		case 1:
+			return 'R';
+		default:
+			return 'B';
+	}	
+}
+
 std::vector<double> Network::prodElement(const std::vector<double>& tab1, const std::vector<double>& tab2) const
 {
 	assert(tab1.size() == tab2.size());
@@ -144,7 +172,7 @@ void Network::writeSingleWeight(std::ostream& out, int layer, int step) const
 
 void Network::buildRandomWeights()
 {
-	std::uniform_real_distribution<double> d(-0.5,0.5);
+	std::uniform_real_distribution<double> d(-0.3,0.3);
 	Matrice temp1;
 	Layer temp2;
 	
@@ -198,13 +226,10 @@ void Network::run()
 	out1.open("../data/weights1.txt");
 	std::ofstream out2;
 	out2.open("../data/weights2.txt");
-	std::ofstream out3;
-	out3.open("../data/weights3.txt");
 	
 	std::vector<std::ofstream> weightFiles;
 	weightFiles.push_back(std::move(out1));								// Impossible de push back un std::ofstream car pas de copie permise
 	weightFiles.push_back(std::move(out2));
-	weightFiles.push_back(std::move(out3));
 	
 	std::cout << "Simulation is running..." << std::endl;
 		
@@ -215,7 +240,6 @@ void Network::run()
 	
 	out1.close();
 	out2.close();
-	out3.close();
 	errorsFile.close();
 	inputFile.close();
 }
@@ -223,17 +247,21 @@ void Network::run()
 void Network::update(std::ifstream& inputFile, std::ofstream& errorsFile, std::vector<std::ofstream>& weightFiles, int step)
 {
 	std::vector<double> inputs(readInput(inputFile));
-
+	neurons_[0][0] = inputs[0];
+	neurons_[0][1] = inputs[1];
+	
 	for(size_t i(0); i < neurons_.size() - 1; ++i){
-		activateLayer(i, inputs);
+		activateLayer(i);
 	}
 	delta_final_ = correctOutputs_[step] - neurons_[_NB_LAYERS_ - 1][0];
+	if(step % 3 == 0){													//on prend l'erreur chaque 10 itérations --> allège le graph
 		errorsFile << delta_final_ << '\n';
+	}
 		
 	calculateDeltas();
 	updateWeights();
 	writeWeights(weightFiles, step);
-	displayLoadingBar(step + 1);
+	displayLoadingBar(step + 1);			//+1 pour arriver à 100%
 	//afficheWeights();
 }
 
@@ -281,27 +309,21 @@ void Network::deltaLayer(int index)
 	}
 }	
 
-void Network::activateLayer(int index, const std::vector<double>& inputs)
+void Network::activateLayer(int index)
 {
-	std::vector<double> tab1;
-	if(index <= 0){														
-		tab1 = inputs;													//first layer gets activated by inputs
-	}else{
-		tab1 = neurons_[index];										//other layers are activated by previous layer
-	}
-	
 	for(size_t i(0); i < neurons_[index + 1].size(); ++i){	
 		//std::cerr << index << tab1.size() << weights_[index][i].size() << std::endl;
-		neurons_[index + 1][i] = sigmoid(prodScal(tab1,  weights_[index][i]));
+		neurons_[index + 1][i] = sigmoid(prodScal(neurons_[index],  weights_[index][i]));
 	}
 }
 
-void Network::updateWeights()
+void Network::updateWeights()								// !!!!!!!!!!!!Problème dans la fonction: weights de input à L1 ne sont pas updaté
 {
 	for(size_t i(0); i < weights_.size(); ++i){
 		for(size_t j(0); j < weights_[i].size(); ++j){
 			for(size_t k(0); k < weights_[i][j].size(); ++k){
 				weights_[i][j][k] += eta_ * deltas_[i + 1][j] * deriveeSigmoid(neurons_[i + 1][j]) * neurons_[i][k]; // + 1  car 1er layer est input -> pas de delta
+				//std::cerr << "une fois" << neurons_[i][k] << std::endl;
 			}
 		}
 	}
@@ -315,10 +337,7 @@ Network::Network(unsigned int iterations_tot, double learningRate)
 	for(size_t i(0); i < _NB_NEURONS1_; ++i){
 			neurons_[1].push_back(0.0);
 		}
-	for(size_t j(0); j < _NB_NEURONS2_; ++j){
-			neurons_[2].push_back(0.0);
-		}
-	neurons_[3] = {0.0};
+	neurons_[2] = {0.0};
 	
 	buildRandomWeights();
 	deltas_ = neurons_;
