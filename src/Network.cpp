@@ -190,7 +190,7 @@ void Network::buildRandomWeights()
 	}	
 }
 
-std::vector<double> Network::readInput(std::ifstream& inputFile)
+std::vector<double> Network::readInputV2(std::ifstream& inputFile)
 {
 	std::vector<double> res;
 	std::string line;
@@ -207,6 +207,32 @@ std::vector<double> Network::readInput(std::ifstream& inputFile)
 		int temp3 = temp2 - '0';			//(char)'0' = (int)48 en ASCII --> à soustraire
 		assert(temp3 >= 0 and temp3 <= 9);
 		correctOutputs_.push_back(temp3);	
+	return res;
+}
+
+std::vector<double> Network::readInput(std::ifstream& inputFile)
+{
+	std::vector<double> res;
+	std::string line;
+
+		getline(inputFile, line);
+		std::istringstream streamDouble(line);
+			
+		double temp1(0.0);
+			while(streamDouble >> temp1){
+				res.push_back(temp1);
+			}
+
+		char temp2 = line.back();
+		int temp3 = temp2 - '0';			//(char)'0' = (int)48 en ASCII --> à soustraire
+		assert(temp3 >= 0 and temp3 <= 9);
+		correctOutputs_.push_back(temp3);
+		/*	
+		for(auto i: res){
+			std::cout << i << " ";
+		}
+		std::cout <<std::endl;
+		*/
 	return res;
 }
 

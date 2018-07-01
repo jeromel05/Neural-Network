@@ -70,6 +70,10 @@ public:
 	void calculateDeltas();
 	void deltaLayer(int index);
 	void updateWeights();
+	
+	
+	//-------New Data--------------------
+	std::vector<double> readInputV2(std::ifstream& inputFile);
 
 	Network(unsigned int iterations_tot = 100, double learningRate = 0.5);
 	~Network();
