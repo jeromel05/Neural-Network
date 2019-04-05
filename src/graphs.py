@@ -2,53 +2,56 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+import random as rand1
+from random import randint
 
-with open('../data/final_errors.txt') as f:
-    data1 = f.read()
+nb_plotted_weights = 10; #peu importe le nb de weights, on n'en mettra que 6 sur le graph
 
+with open('../data/final_errors.txt') as f0:
+    data0 = f0.read()
+
+with open('../data/weights1.txt') as f1:
+    data1 = f1.read()
+
+with open('../data/weights2.txt') as f2:
+    data2 = f2.read()
+
+data0 = data0.split('\n')
 data1 = data1.split('\n')
-data1.pop()			#delete le dernier car read() ajoute un espace
-
-temp4 = np.array(data1,float)
-
-with open('../data/weights2.txt') as f:
-    data2 = f.read()
-
 data2 = data2.split('\n')
-data2.pop()	
-
-nb_weights = data2[0].count('|') + 1
-if(nb_weights > 6):
-	nb_weights = 6    			# il y a trop de connections --> on selectionne 10
-
-y2 = []	
-for i in range(nb_weights):
-	y2.append([])													
-														# y est une matrice 2D contenant toutes les données, 1er for necessaire pour que y[i] ne soit pas out of range
-temp = []															# i donne le nb de lignes différentes sur le graphe											
-for e in data2:
-	for i in range(nb_weights):
-		temp = e.split('|')
-		y2[i].append(temp[i])
-
-with open('../data/weights1.txt') as f:
-    data1 = f.read()
-
-data1 = data1.split('\n')
+data0.pop()						#delete le dernier car read() ajoute un espace
 data1.pop()	
+data2.pop()	
+temp4 = np.array(data0,float)
 
-nb_weights = data1[0].count('|') + 1	
-if(nb_weights > 6):
-	nb_weights = 6 
+nb_weights1 = data1[0].count('|') + 1	
+nb_weights2 = data2[0].count('|') + 1
 
 y1 = []	
-for i in range(nb_weights):
-	y1.append([])													
+y2 = []
+randIndices1=[]	
+randIndices2=[]	
+
+for i in range(nb_plotted_weights):
+	y1.append([])				
+	y2.append([])						#cree juste un array vide de la bonne taille
+	randIndices2.append(randint(0,nb_weights2-1))	#cree un array contenant des nb random	pour selectionner les weights aléatoirement						
+	randIndices1.append(randint(0,nb_weights1-1))						
+# y est une matrice 2D contenant toutes les données, 1er for necessaire pour que y[i] ne soit pas out of range
+# i donne le nb de lignes différentes sur le graphe	
+
 temp = []															
 for e in data1:
-	for i in range(nb_weights):
+	for i in range(nb_plotted_weights):
 		temp = e.split('|')
-		y1[i].append(temp[i])
+		y1[i].append(temp[randIndices1[i]])
+		
+temp = []																	
+for e in data2:
+	for i in range(nb_plotted_weights):
+		temp = e.split('|')
+		y2[i].append(temp[randIndices2[i]])
+														
 		
 fig0 = plt.subplot2grid((2, 2), (0, 0), colspan=2)
 #fig0.bar(np.arange(1,np.size(temp4)+1), temp4,width=0.1)	#au cas ou l'on veut faire un bar graph
@@ -82,18 +85,11 @@ fig2.set_ylabel('Weights')
 
 plt.subplots_adjust(wspace=0.7, hspace=0.5)
 
-#fig0.set_ylim(-1.1,1.1)
-#fig0.set_yticks((-1.0,0.0,1.0))
-#fig0.set_yticklabels(('-1.0','0.0','1.0'))
-
-#fig0.set_yticks(np.arange(min(data1), max(data1)+1, 1.0))
-
 for ax in [fig0, fig1,fig2]:
 	temp = []
 	#for e in plt.axes(ax).get_yticklabels():
 	#	temp.append(str(round(int(e), 2)))		#attempt to round the values of the ticks to 2 chiffres significatifs
 	#ax.set_yticklabels(temp)
-	#ax.locator_params(axis='y', nbins=5) //line cause erreur
 	
 plt.savefig('plots.png')
 plt.show()

@@ -305,7 +305,7 @@ void Network::update(std::ofstream& errorsFile, std::vector<std::ofstream>& weig
 		activateLayer(i);
 	}
 	delta_final_ = correctOutputs_[randomStep] - neurons_[_NB_LAYERS_ - 1][0];
-	std::cout << " out: " << neurons_[_NB_LAYERS_ - 1][0] << " correct: " << correctOutputs_[randomStep] << " step: " << randomStep << std::endl;
+	//std::cout << " out: " << neurons_[_NB_LAYERS_ - 1][0] << " correct: " << correctOutputs_[randomStep] << " step: " << randomStep << std::endl;
 	if(step % 1 == 0){													//on prend l'erreur chaque 10 itérations --> allège le graph
 		errorsFile << delta_final_ << '\n';
 	}
@@ -313,7 +313,7 @@ void Network::update(std::ofstream& errorsFile, std::vector<std::ofstream>& weig
 	calculateDeltas();
 	updateWeights();
 	writeWeights(weightFiles, step);
-	//displayLoadingBar(step + 1);			//+1 pour arriver à 100%
+	displayLoadingBar(step + 1);			//+1 pour arriver à 100%
 }
 
 void Network::displayLoadingBar(int i) const
@@ -368,7 +368,7 @@ void Network::activateLayer(int index)
 	}
 }
 
-void Network::updateWeights()								// !!!!!!!!!!!!Problème dans la fonction: weights de input à L1 ne sont pas updaté
+void Network::updateWeights()								
 {
 	for(size_t i(0); i < weights_.size(); ++i){
 		for(size_t j(0); j < weights_[i].size(); ++j){
@@ -394,7 +394,7 @@ int Network::newInt(std::vector<int>& deja_tires) const
 		}
 		deja_tires.push_back(index1);
 	}
-	std::cout << "randstep: " << index1 << std::endl;
+	//std::cout << "randstep: " << index1 << std::endl;
 	return index1;
 }
 	
@@ -402,7 +402,7 @@ int Network::newInt(std::vector<int>& deja_tires) const
 Network::Network(unsigned int iterations_tot, double learningRate)
 :eta_(learningRate), iterations_tot_(iterations_tot)
 {
-	for(size_t i(0); i < _NB_LAYERS_; ++i){
+	for(size_t i(0); i < _NB_INPUTS_; ++i){
 		neurons_[0].push_back(0.0);
 	}	
 	for(size_t i(0); i < _NB_NEURONS1_; ++i){
