@@ -53,18 +53,18 @@ for e in data2:
 		y2[i].append(temp[randIndices2[i]])
 														
 		
-fig0 = plt.subplot2grid((2, 2), (0, 0), colspan=2)
+fig0 = plt.subplot2grid((3, 3), (0, 0), colspan=3)
 #fig0.bar(np.arange(1,np.size(temp4)+1), temp4,width=0.1)	#au cas ou l'on veut faire un bar graph
 fig0.plot(temp4, linewidth=0.7,c=((1,0,0.5,1)))			#rgba tous des valeurs entre 0 et 1
-fig0.set_ylim(-1,1)
-fig0.set_xticks(np.arange(0,np.size(temp4),step=10))
-fig0.set_yticks(np.arange(-1,1,step=0.3))
+fig0.set_ylim(0,0.5)
+fig0.set_xticks(np.arange(0,np.size(temp4),step=np.size(temp4)/10))
+fig0.set_yticks(np.arange(0,0.5,step=0.1))
 fig0.set_title('Final Error')
 fig0.set_xlabel('Epochs')
 fig0.set_ylabel('Error')	
 					
 
-fig1 = plt.subplot2grid((2, 2), (1, 0))
+fig1 = plt.subplot2grid((3, 3), (1, 0))
 for e in y1:
 	fig1.plot(e, linewidth=0.7)
 	
@@ -74,7 +74,7 @@ fig1.set_xlabel('Epochs')
 fig1.set_ylabel('Weights')
 	
 
-fig2 = plt.subplot2grid((2, 2), (1, 1))
+fig2 = plt.subplot2grid((3, 3), (1, 1))
 for e in y2:
 	fig2.plot(e, linewidth=0.7)
 
@@ -83,12 +83,12 @@ fig2.set_title('L1 to Output')
 fig2.set_xlabel('Epochs')
 fig2.set_ylabel('Weights')
 
-plt.subplots_adjust(wspace=0.7, hspace=0.5)
+plt.subplots_adjust(wspace=0.7, hspace=0.8)
 
 for ax in [fig0, fig1,fig2]:
 	temp = []
-	#for e in plt.axes(ax).get_yticklabels():
-	#	temp.append(str(round(int(e), 2)))		#attempt to round the values of the ticks to 2 chiffres significatifs
+	#for e in plt.axes(ax).get_yticks():
+	#	temp.append(round(e))		#attempt to round the values of the ticks to 2 chiffres significatifs
 	#ax.set_yticklabels(temp)
 	
 plt.savefig('plots.png')

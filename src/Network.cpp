@@ -5,7 +5,7 @@ MatriceFixe Network::getActivations() const
 	return neurons_;
 }
 
-std::vector<int> Network::getCorrectOutput() const
+Matrice Network::getCorrectOutput() const
 {
 	return correctOutputs_;
 }
@@ -38,6 +38,8 @@ double Network::flowerTypeToDouble(std::string type1) const
 		return 0.0;
 	}else if(type1.compare(std::string("Iris-versicolor")) ==0){
 		return 1.0;
+	}else if(type1.compare(std::string("Iris-virginica")) ==0){
+		return 2.0;
 	}else{
 		throw(std::string("undefined flower type"));
 		return -10;
@@ -92,6 +94,15 @@ double Network::prodScal(const std::vector<double>& tab1, const std::vector<doub
 return res;
 }
 
+double Network::sum(const std::vector<double>& tab1) const
+{
+	double res(0.0);
+	for(size_t i(0); i < tab1.size(); ++i){
+		res+=tab1[i];
+	}
+	return res;
+}
+
 void Network::afficheWeights() const
 {
 	for(size_t i(0); i < weights_.size(); ++i){
@@ -126,33 +137,6 @@ void Network::afficheVect(const Layer& tab) const
 		std::cout << i << " ";
 	}
 	std::cout << std::endl;
-}
-
-void Network::generateTrainingDataSet() const
-{
-	std::ofstream out;
-	out.open("../data/trainingDataSet.txt");
-
-	double total(0.0);
-	double temp(0.0);
-	std::uniform_int_distribution<> dist(0, 1);
-	
-	for(size_t i(0); i < iterations_tot_; ++i){
-		for(size_t j(0); j < 2; ++j){
-			temp = dist(gen);
-			total += temp;
-			out << temp << " ";
-		}
-		out << "=";
-			if(total >= 2){
-				out << 1;
-			}else{
-				out << 0;
-			}
-		out << '\n';
-		total = 0.0;
-	}
-	out.close();
 }
 
 void Network::writeWeights(std::vector<std::ofstream>& out, int step) const
@@ -196,14 +180,28 @@ void Network::buildRandomWeights()
 			temp1.push_back(temp2);
 			temp2.clear();
 			}
-		
 		weights_[h] = temp1;
 		temp1.clear();
-	}	
+	}
+}
+
+void Network::buildRandomBiases()
+{
+	std::uniform_real_distribution<double> d(-0.8,0.8);
+	Layer temp;
+	
+	for(size_t h(0); h < _NB_LAYERS_ - 1; ++h){
+		for(size_t i(0); i < neurons_[h + 1].size(); ++i){
+			temp.push_back(d(gen));
+		}
+		bias_.push_back(temp);
+		temp.clear();
+	}
 }
 
 std::vector<double> Network::readInput(std::ifstream& inputFile)
 {
+	//Fonction nest plus utiliséééé!!!!
 	std::vector<double> res;
 	//stringstream est un buffer qui contient les données (string), pour ensuite les transformer en double
 	std::string cell("");
@@ -220,11 +218,15 @@ std::vector<double> Network::readInput(std::ifstream& inputFile)
 	
 	double temp3(0.0);
 	temp3 = flowerTypeToDouble(temp2);
-	correctOutputs_.push_back(temp3);
-	std::cout << temp2 << " " << temp3 << std::endl;	
+	std::vector<double> temp_vec(3,0.0);
+	temp_vec[temp3] += 1;
+	correctOutputs_.push_back(temp_vec);
+	//std::cout << temp2 << " " << temp3 << std::endl;	
 	return res; //res est un vesteur de double avec les 4 mesures de la fleur
 }
 
+//check taille fichier input >= nb iterations
+//iniitiliser correctOutputs a un vec de zeros
 void Network::readWholeInput(std::ifstream& inputFile)
 {	
 	while(!inputFile.eof()){
@@ -244,12 +246,15 @@ void Network::readWholeInput(std::ifstream& inputFile)
 		inputFile >> temp2;		//parsing the last information, the name of the flower
 		
 		double temp3(0.0);
-		//std::cerr << "t2 " << temp2 << std::endl;
 		temp3 = flowerTypeToDouble(temp2);
-		correctOutputs_.push_back(temp3);
+		std::vector<double> temp_vec(3,0.0);		//push back un vect avec un "1" à la bonne position
+		temp_vec[temp3] += 1;
+		correctOutputs_.push_back(temp_vec);
+	
 		wholeData_.push_back(std::make_pair(mesures,temp3));
 		mesures.clear();
 	}
+	data_size_ = wholeData_.size();
 }
 
 void Network::run()
@@ -279,7 +284,6 @@ void Network::run()
 	std::cout << "Simulation is running..." << std::endl;
 		
 	for(size_t h(0); h < iterations_tot_; ++h){
-		//update(inputFile, errorsFile, weightFiles, h);
 		update(errorsFile, weightFiles, h, deja_tires);
 	}
 	std::cout << std::endl;
@@ -288,14 +292,15 @@ void Network::run()
 	out2.close();
 	errorsFile.close();
 	inputFile.close();
+	std::cout << "Plotting graphs..." << std::endl;
 }
 
 void Network::update(std::ofstream& errorsFile, std::vector<std::ofstream>& weightFiles, int step, std::vector<int>& deja_tires)
 {	
 	int randomStep(0);
-	std::uniform_int_distribution<> dint1(0,100-1);
-	//randomStep = dint1(gen);		//on prend plusieurs fois la meme donnée
-	randomStep = newInt(deja_tires);	//newInt nous donne une valeur que l'on a pas encore tiré entre 0 et 99
+	std::uniform_int_distribution<> dint1(0,data_size_-1);
+	randomStep = dint1(gen);		//on prend plusieurs fois la meme donnée
+	//randomStep = newInt(deja_tires);	//newInt nous donne une valeur que l'on a pas encore tiré entre 0 et 99
 
 	for(size_t j(0); j < _NB_INPUTS_; ++j){
 		neurons_[0][j] = wholeData_[randomStep].first[j];
@@ -304,16 +309,21 @@ void Network::update(std::ofstream& errorsFile, std::vector<std::ofstream>& weig
 	for(size_t i(0); i < neurons_.size() - 1; ++i){
 		activateLayer(i);
 	}
-	delta_final_ = correctOutputs_[randomStep] - neurons_[_NB_LAYERS_ - 1][0];
-	//std::cout << " out: " << neurons_[_NB_LAYERS_ - 1][0] << " correct: " << correctOutputs_[randomStep] << " step: " << randomStep << std::endl;
-	if(step % 1 == 0){													//on prend l'erreur chaque 10 itérations --> allège le graph
-		errorsFile << delta_final_ << '\n';
-	}
 		
-	calculateDeltas();
+	calculateDeltas(randomStep);
 	updateWeights();
+	updateBiases();
 	writeWeights(weightFiles, step);
 	displayLoadingBar(step + 1);			//+1 pour arriver à 100%
+	
+	if(step % (iterations_tot_/300) == 0){													//on prend l'erreur chaque 10 itérations --> allège le graph
+		errorsFile << delta_final_scal_ << '\n';
+	}
+	/*
+	std::cout << "out corr: "; afficheVect(correctOutputs_[randomStep]);
+	afficheVect(neurons_[_NB_LAYERS_-1]);
+	std::cout << std::endl;
+	*/
 }
 
 void Network::displayLoadingBar(int i) const
@@ -327,15 +337,28 @@ void Network::displayLoadingBar(int i) const
         if (i <= pos) std::cout << "=";
         else std::cout << " ";
     }
-    std::cout << "] " << progress * 100.0 << "%\r";
+    std::cout << "] " << int(progress * 100) << "%\r";
 	std::cout.flush();     
 }
 
-void Network::calculateDeltas()
+void Network::calculateDeltas(int randomStep)
 {
+	for(size_t k(0); k < _NB_OUTPUTS_; ++k){
+		deltas_[_NB_LAYERS_ - 1][k] = correctOutputs_[randomStep][k] - neurons_[_NB_LAYERS_ - 1][k];	//calcule le dernier layer
+	}
+	calculate_delta_final_scal();		//least squares scalar value
 	for(size_t i(_NB_LAYERS_ - 1); i > 1 ; --i){	//layer 0 is input layer so no need to compute deltas
 		deltaLayer(i);
 	}
+}
+
+void Network::calculate_delta_final_scal(){
+	double temp=0.0;
+	for(size_t i(0); i < _NB_OUTPUTS_; ++i){
+		temp += deltas_[_NB_LAYERS_-1][i]*deltas_[_NB_LAYERS_-1][i];
+	}
+	temp = sqrt(temp);
+	delta_final_scal_=temp/_NB_OUTPUTS_;
 }
 
 void Network::deltaLayer(int index)
@@ -343,12 +366,7 @@ void Network::deltaLayer(int index)
 	Layer temp_tab;
 	Layer tab1;
 	
-	if(index >= _NB_LAYERS_ - 1){														
-		tab1.push_back(delta_final_);
-		deltas_[index][0] = delta_final_;											
-	}else{
-		tab1 = deltas_[index];						
-	}
+	tab1 = deltas_[index];
 	
 	for(size_t i(0); i < neurons_[index - 1].size(); ++i){	
 		for(size_t j(0); j < neurons_[index].size(); ++j){	
@@ -364,7 +382,7 @@ void Network::activateLayer(int index)
 {
 	for(size_t i(0); i < neurons_[index + 1].size(); ++i){	
 		//std::cerr << index << tab1.size() << weights_[index][i].size() << std::endl;
-		neurons_[index + 1][i] = sigmoid(prodScal(neurons_[index],  weights_[index][i]));
+		neurons_[index + 1][i] = sigmoid(prodScal(neurons_[index],  weights_[index][i]) + bias_[index][i]);	
 	}
 }
 
@@ -373,16 +391,38 @@ void Network::updateWeights()
 	for(size_t i(0); i < weights_.size(); ++i){
 		for(size_t j(0); j < weights_[i].size(); ++j){
 			for(size_t k(0); k < weights_[i][j].size(); ++k){
-				weights_[i][j][k] += eta_ * deltas_[i + 1][j] * deriveeSigmoid(neurons_[i + 1][j]) * neurons_[i][k]; // + 1  car 1er layer est input -> pas de delta
+				weights_[i][j][k] += eta_ * deltas_[i + 1][j] * deriveeSigmoid(neurons_[i + 1][j]) * neurons_[i][k]; // + 1  car 1er layer est input -> pas de delta, + car le moins s'annule avec celui de la dérivée partielle
 				//std::cerr << "une fois" << neurons_[i][k] << std::endl;
+				//Do the formula w/ sum pck multiple outputs requires it
 			}
 		}
 	}
 }
 
+void Network::updateBiases()
+{
+	for(size_t h(0); h < _NB_LAYERS_-1; ++h){
+		for(size_t j(0); j < neurons_[h + 1].size(); ++j){
+			//bias_[0][j] += eta_ * deltas_[1][j] * deriveeSigmoid(neurons_[1][j]);
+			bias_[h][j] += eta_ * sum(prodElement(deltas_[h+1],reArrangeVect(h,j)))/deltas_[h+1].size() * deriveeSigmoid(neurons_[1][j]);
+			//bias_[h][j] += eta_ * sum(prodElement(deltas_[h+1],weights_[h+1][j]))/deltas_[h+1].size() * deriveeSigmoid(neurons_[1][j]);//pb pck maps connections the wrong way
+			//bias_[0][i] += eta_*deltas_[_NB_LAYERS_ - 2][i];	
+		}
+	}
+}
+
+std::vector<double> Network::reArrangeVect(int indexLayer, int indexTargetNeur) const
+{
+	Layer res;
+	for(size_t j(0); j < neurons_[indexLayer + 1].size(); ++j){
+		res.push_back(weights_[indexLayer][j][indexTargetNeur]);
+	}
+	return res;
+}
+
 int Network::newInt(std::vector<int>& deja_tires) const
 {
-	std::uniform_int_distribution<> dint(0,100-1);	//on veut tirer au hasard dans les données pour ne pas tirer les données dans l'ordre
+	std::uniform_int_distribution<> dint(0,data_size_-1);	//on veut tirer au hasard dans les données pour ne pas tirer les données dans l'ordre
 	double index1(0.0);
 	bool isNew(false);
 	
@@ -400,7 +440,7 @@ int Network::newInt(std::vector<int>& deja_tires) const
 	
 
 Network::Network(unsigned int iterations_tot, double learningRate)
-:eta_(learningRate), iterations_tot_(iterations_tot)
+:eta_(learningRate), iterations_tot_(iterations_tot), delta_final_scal_(0.0), data_size_(0)
 {
 	for(size_t i(0); i < _NB_INPUTS_; ++i){
 		neurons_[0].push_back(0.0);
@@ -408,9 +448,11 @@ Network::Network(unsigned int iterations_tot, double learningRate)
 	for(size_t i(0); i < _NB_NEURONS1_; ++i){
 		neurons_[1].push_back(0.0);
 	}
-	neurons_[2] = {0.0};
-	
+	for(size_t i(0); i < _NB_OUTPUTS_; ++i){
+		neurons_[2].push_back(0.0);
+	}	
 	buildRandomWeights();
+	buildRandomBiases();
 	deltas_ = neurons_;
 }
 

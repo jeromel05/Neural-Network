@@ -16,7 +16,7 @@
 #define _NB_LAYERS_ 3 													//counting input and output layer
 #define _NB_INPUTS_ 4
 #define _NB_NEURONS1_ 1000
-#define _NB_OUTPUTS_ 1
+#define _NB_OUTPUTS_ 3
 
 typedef double Neuron;
 typedef std::vector<double> Layer;
@@ -34,15 +34,17 @@ private:
 	std::array<Matrice, _NB_LAYERS_ - 1> weights_;
 	MatriceFixe neurons_;
 	unsigned int iterations_tot_;
-	std::vector<int> correctOutputs_;
+	Matrice correctOutputs_;
 	MatriceFixe deltas_;		
-	double delta_final_;
 	std::vector<AllInfos> wholeData_;
+	double delta_final_scal_;
+	int data_size_;
+	Matrice bias_;
 	
 public:
 	//---------Utilities--------------
 	MatriceFixe getActivations() const;
-	std::vector<int> getCorrectOutput() const;
+	Matrice getCorrectOutput() const;
 	double sigmoid(double valeur) const;
 	double deriveeSigmoid(double valeur) const;
 	bool checkActivationBounds(double valeur) const;
@@ -50,7 +52,9 @@ public:
 	char intToClass(int i) const;
 	double flowerTypeToDouble(std::string type1) const;
 	int newInt(std::vector<int>& deja_tires) const;
-
+	void calculate_delta_final_scal();
+	double sum(const std::vector<double>& tab1) const;
+	std::vector<double> reArrangeVect(int indexLayer, int indexTargetNeur) const;
 	
 	std::vector<double> prodElement(const std::vector<double>& tab1, const std::vector<double>& tab2) const;
 	double prodScal(const std::vector<double>& tab1, const std::vector<double>& tab2) const;
@@ -62,8 +66,8 @@ public:
 	void writeWeights(std::vector<std::ofstream>& out, int step) const;
 	void writeSingleWeight(std::ostream& out, int layer, int step) const;
 	
-	void generateTrainingDataSet() const;
 	void buildRandomWeights();
+	void buildRandomBiases();
 	std::vector<double> readInput(std::ifstream& inputFile);
 	void readWholeInput(std::ifstream& inputFile);
 	std::vector<double> computeError(std::ifstream& fichier) const;
@@ -73,9 +77,11 @@ public:
 	void activateLayer(int index);
 	
 	//-----BackPropagation-----------
-	void calculateDeltas();
+	void calculateDeltas(int randomStep);
 	void deltaLayer(int index);
 	void updateWeights();
+	void updateBiases();
+
 
 	Network(unsigned int iterations_tot = 100, double learningRate = 0.5);
 	~Network();
