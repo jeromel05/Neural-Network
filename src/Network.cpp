@@ -12,6 +12,10 @@ Matrice Network::getCorrectOutput() const
 
 double Network::sigmoid(double valeur) const
 {
+	if(valeur > 1e+10){
+		std::cerr << "val:" << valeur << std::endl;
+		valeur = 1e+10;
+	}
 	double temp(0.0);
 	temp = 1 / (1 + exp(-valeur));
 	assert(temp <= 1.0 and temp >= 0.0);
@@ -187,7 +191,7 @@ void Network::buildRandomWeights()
 
 void Network::buildRandomBiases()
 {
-	std::uniform_real_distribution<double> d(-0.8,0.8);
+	std::uniform_real_distribution<double> d(-0.001,0.001);
 	Layer temp;
 	
 	for(size_t h(0); h < _NB_LAYERS_ - 1; ++h){
@@ -386,12 +390,16 @@ void Network::activateLayer(int index)
 	}
 }
 
-void Network::updateWeights()								
+void Network::updateWeights()			//cette fonction cause PAS segfault, mais value of activation of neurons shoots up to 1e+300			
 {
 	for(size_t i(0); i < weights_.size(); ++i){
 		for(size_t j(0); j < weights_[i].size(); ++j){
 			for(size_t k(0); k < weights_[i][j].size(); ++k){
-				weights_[i][j][k] += eta_ * deltas_[i + 1][j] * deriveeSigmoid(neurons_[i + 1][j]) * neurons_[i][k]; // + 1  car 1er layer est input -> pas de delta, + car le moins s'annule avec celui de la dérivée partielle
+				weights_[i][j][k] += eta_ * sum(prodElement(deltas_[i+1],reArrangeVect(i,k)))/deltas_[i+1].size() * deriveeSigmoid(neurons_[i][k]) * neurons_[i][k];
+				if( weights_[i][j][k] < -100 or weights_[i][j][k] > 100){
+					std::cerr << "w: " << weights_[i][j][k] << std::endl;
+				}
+				//weights_[i][j][k] += eta_ * deltas_[i + 1][j] * deriveeSigmoid(neurons_[i + 1][j]) * neurons_[i][k]; // + 1  car 1er layer est input -> pas de delta, + car le moins s'annule avec celui de la dérivée partielle
 				//std::cerr << "une fois" << neurons_[i][k] << std::endl;
 				//Do the formula w/ sum pck multiple outputs requires it
 			}
@@ -403,10 +411,9 @@ void Network::updateBiases()
 {
 	for(size_t h(0); h < _NB_LAYERS_-1; ++h){
 		for(size_t j(0); j < neurons_[h + 1].size(); ++j){
-			//bias_[0][j] += eta_ * deltas_[1][j] * deriveeSigmoid(neurons_[1][j]);
-			bias_[h][j] += eta_ * sum(prodElement(deltas_[h+1],reArrangeVect(h,j)))/deltas_[h+1].size() * deriveeSigmoid(neurons_[1][j]);
+			//bias_[0][j] += eta_ * deltas_[1][j] * deriveeSigmoid(neurons_[1][j]);	//version for scalar output -> works correctly!!
+			bias_[h][j] += eta_ * sum(prodElement(deltas_[h+1],reArrangeVect(h,j)))/deltas_[h+1].size() * deriveeSigmoid(neurons_[1][j]);	//dernière version, 80% confident que correct
 			//bias_[h][j] += eta_ * sum(prodElement(deltas_[h+1],weights_[h+1][j]))/deltas_[h+1].size() * deriveeSigmoid(neurons_[1][j]);//pb pck maps connections the wrong way
-			//bias_[0][i] += eta_*deltas_[_NB_LAYERS_ - 2][i];	
 		}
 	}
 }

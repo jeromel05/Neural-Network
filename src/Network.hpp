@@ -15,7 +15,7 @@
 
 #define _NB_LAYERS_ 3 													//counting input and output layer
 #define _NB_INPUTS_ 4
-#define _NB_NEURONS1_ 1000
+#define _NB_NEURONS1_ 100
 #define _NB_OUTPUTS_ 3
 
 typedef double Neuron;
