@@ -1,5 +1,6 @@
 #!/bin/sh
-cd /Users/jerome/Documents/Prog\ Gen/cpp/NeuralNetNew 
+cd /Users/jerome/Documents/EPFL/1ere/Progra\ 2/cpp/Neural-Network
+rm build
 mkdir build
 cd build
 cmake ..
