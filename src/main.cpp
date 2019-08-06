@@ -28,7 +28,7 @@ std::ostream& operator<<(std::ostream& sortie, const Matrice& matrice)
 int main()
 {
 	try{
-		Network net(1000, 0.35);
+		Network net(900, 0.35);
 		net.run();
 	}
 	catch(std::string e){

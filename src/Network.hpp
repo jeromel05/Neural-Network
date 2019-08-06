@@ -68,7 +68,6 @@ public:
 	
 	void buildRandomWeights();
 	void buildRandomBiases();
-	std::vector<double> readInput(std::ifstream& inputFile);
 	void readWholeInput(std::ifstream& inputFile);
 	std::vector<double> computeError(std::ifstream& fichier) const;
 	

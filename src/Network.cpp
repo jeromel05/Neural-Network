@@ -203,32 +203,6 @@ void Network::buildRandomBiases()
 	}
 }
 
-std::vector<double> Network::readInput(std::ifstream& inputFile)
-{
-	//Fonction nest plus utiliséééé!!!!
-	std::vector<double> res;
-	//stringstream est un buffer qui contient les données (string), pour ensuite les transformer en double
-	std::string cell("");
-	double temp1(0.0);
-	
-	for(size_t i(0); i < _NB_INPUTS_;++i){
-		std::getline(inputFile,cell, ',');	//lit une seule donnée (double)
-		std::stringstream(cell)>>temp1;
-		res.push_back(temp1);
-	}
-	
-	std::string temp2("");
-	inputFile >> temp2;		//parsing the last information, the name of the flower
-	
-	double temp3(0.0);
-	temp3 = flowerTypeToDouble(temp2);
-	std::vector<double> temp_vec(3,0.0);
-	temp_vec[temp3] += 1;
-	correctOutputs_.push_back(temp_vec);
-	//std::cout << temp2 << " " << temp3 << std::endl;	
-	return res; //res est un vesteur de double avec les 4 mesures de la fleur
-}
-
 //check taille fichier input >= nb iterations
 //iniitiliser correctOutputs a un vec de zeros
 void Network::readWholeInput(std::ifstream& inputFile)
@@ -390,6 +364,8 @@ void Network::activateLayer(int index)
 	}
 }
 
+//aout : conclusion: fonction d'update paraissent juste mais il y a forcement une fate pck weights become way too big -> rearranger tout sosu forme matricielle en définissant le produit matriciel et Hadamard 
+
 void Network::updateWeights()			//cette fonction cause PAS segfault, mais value of activation of neurons shoots up to 1e+300			
 {
 	for(size_t i(0); i < weights_.size(); ++i){
@@ -409,11 +385,12 @@ void Network::updateWeights()			//cette fonction cause PAS segfault, mais value 
 
 void Network::updateBiases()
 {
-	for(size_t h(0); h < _NB_LAYERS_-1; ++h){
-		for(size_t j(0); j < neurons_[h + 1].size(); ++j){
+	for(size_t i(0); i < _NB_LAYERS_-1; ++i){
+		for(size_t j(0); j < neurons_[i + 1].size(); ++j){
 			//bias_[0][j] += eta_ * deltas_[1][j] * deriveeSigmoid(neurons_[1][j]);	//version for scalar output -> works correctly!!
-			bias_[h][j] += eta_ * sum(prodElement(deltas_[h+1],reArrangeVect(h,j)))/deltas_[h+1].size() * deriveeSigmoid(neurons_[1][j]);	//dernière version, 80% confident que correct
+			bias_[i][j] += eta_ * sum(prodElement(deltas_[i+1],reArrangeVect(i,j)))/deltas_[i+1].size() * deriveeSigmoid(neurons_[1][j]);	//dernière version, 80% confident que correct avant aout
 			//bias_[h][j] += eta_ * sum(prodElement(deltas_[h+1],weights_[h+1][j]))/deltas_[h+1].size() * deriveeSigmoid(neurons_[1][j]);//pb pck maps connections the wrong way
+			
 		}
 	}
 }
