@@ -91,5 +91,5 @@ for ax in [fig0, fig1,fig2]:
 	#	temp.append(round(e))		#attempt to round the values of the ticks to 2 chiffres significatifs
 	#ax.set_yticklabels(temp)
 	
-plt.savefig('plots.png')
+plt.savefig('../data/plots.png')
 plt.show()

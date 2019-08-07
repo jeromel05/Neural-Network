@@ -1,34 +1,10 @@
 #include <iostream>
 #include "Network.hpp"
 
-std::ostream& operator<<(std::ostream& sortie, const std::vector<double>& tab)
-{
-	for(size_t i(0); i < tab.size(); ++i){
-		sortie << tab[i] << " ";
-	}
-	sortie << std::endl;
-	
-  return sortie;
-}
-
-std::ostream& operator<<(std::ostream& sortie, const Matrice& matrice)
-{
-	for(size_t i(0); i < matrice.size(); ++i){
-		sortie << "Layer " << i << " : " << '\t';
-		
-		for(size_t j(0); j < matrice[i].size(); ++j){
-			sortie << matrice[i][j] << '\t';
-		}
-		sortie << '\n';
-	}
-	
-  return sortie;
-}
-
 int main()
 {
 	try{
-		Network net(900, 0.35);
+		Network net(300, 0.35);
 		net.run();
 	}
 	catch(std::string e){
