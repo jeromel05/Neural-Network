@@ -9,7 +9,7 @@ SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -pedantic")
 SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
 option(test "Build tests." ON)
 
-SET(SOURCE_FILES src/Network.cpp src/Utilities.cpp src/Network.hpp src/Utilities.hpp)
+SET(SOURCE_FILES src/Network.cpp)
 
 include_directories(${CMAKE_SOURCE_DIR}/extra/include)
 

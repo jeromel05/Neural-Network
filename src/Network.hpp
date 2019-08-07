@@ -2,7 +2,34 @@
 #define NETWORK_HPP
 
 #include <iostream>
-#include "Utilities.hpp"
+#include <fstream>
+#include <cassert>
+#include <vector>
+#include <cmath>
+#include <string>
+#include <random>
+#include <sstream>
+#include <array>
+#include <stdio.h>
+#include <unistd.h>
+
+#define  _NB_LAYERS_ 3 													//counting input and output layer
+#define _NB_INPUTS_ 4
+#define _NB_NEURONS1_ 500
+#define _NB_OUTPUTS_ 3
+
+typedef double Neuron;
+typedef std::vector<double> Layer;
+typedef std::array<double, _NB_INPUTS_> Layer0;
+typedef std::array<double, _NB_NEURONS1_> Layer1;
+typedef std::array<double, _NB_OUTPUTS_> Layer2;
+typedef std::vector<std::vector<double>> Matrice;
+typedef std::array<std::vector<double>, _NB_LAYERS_> MatriceFixe;
+typedef std::pair<std::vector<double>, double> AllInfos;
+
+static std::random_device rd;
+static std::mt19937 gen(rd());
+
 
 class Network
 {
@@ -21,10 +48,22 @@ private:
 public:
 	//---------Utilities--------------
 	MatriceFixe getActivations() const;
-	Matrice getCorrectOutput() const;
-	void calculate_delta_final_scal();
-	std::vector<double> reArrangeVect(int indexLayer, int indexTargetNeur) const;
+	Matrice getCorrectOutput()  const;
+	double sigmoid(double valeur) const ;
+	double deriveeSigmoid(double valeur) const ;
+	bool checkActivationBounds(double valeur)  const;
+	double flowerTypeToDouble(const std::string& type1) const ;
+	int newInt(std::vector<int>& deja_tires) const ;
+	double sum(const  std::vector<double>& tab1)  const;
+	Layer vectSum(const Layer& tab1,const Layer& tab2) const;
+	Layer vectSub(const Layer& tab1,const Layer& tab2) const;
+	Layer prodElement(const Layer& tab1, const Layer& tab2) const;
+	double prodScal(const Layer& tab1, const Layer& tab2) const;
+	void afficheVect(const Layer& tab) const;	
 	void displayLoadingBar(int i) const;
+	
+	void calculate_delta_final_scal();
+	Layer reArrangeVect(int indexLayer, int indexTargetNeur) const;
 	void writeWeights(std::vector<std::ofstream>& out, int step) const;
 	void writeSingleWeight(std::ostream& out, int layer, int step) const;
 	

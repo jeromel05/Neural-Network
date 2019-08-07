@@ -1,5 +1,124 @@
 #include "Network.hpp"
 
+bool Network::checkActivationBounds(double valeur) const
+{
+	if(valeur < 0 or valeur > 1.0){
+		 return false;
+	}else{
+		return true;
+	}
+}
+
+double Network::flowerTypeToDouble(const std::string& type1) const
+{
+	if(type1.compare(std::string("Iris-setosa")) ==0){
+		return 0.0;
+	}else if(type1.compare(std::string("Iris-versicolor")) ==0){
+		return 1.0;
+	}else if(type1.compare(std::string("Iris-virginica")) ==0){
+		return 2.0;
+	}else{
+		throw(std::string("undefined flower type"));
+		return -10;
+	}
+}
+
+Layer Network::prodElement(const Layer& tab1, const Layer& tab2) const
+{
+	assert(tab1.size() == tab2.size());
+	Layer res;
+	for(size_t i(0); i < tab1.size(); ++i){
+		res.push_back(tab1[i] * tab2[i]);
+	}
+return res;
+}
+
+double Network::prodScal(const Layer& tab1, const Layer& tab2) const
+{
+	assert(tab1.size() == tab2.size());
+	double res(0.0);
+	for(size_t i(0); i < tab1.size(); ++i){
+		res += tab1[i] * tab2[i];
+	}
+return res;
+}
+
+double  Network::sum(const Layer& tab1) const
+{
+	double res(0.0);
+	for(size_t i(0); i < tab1.size(); ++i){
+		res+=tab1[i];
+	}
+	return res;
+}
+
+Layer  Network::vectSum(const Layer& tab1,const Layer& tab2) const
+{
+	assert(tab1.size() == tab2.size());
+	Layer res;
+	for(size_t i(0); i < tab1.size(); ++i){
+		res.push_back(tab1[i] + tab2[i]);			//devrait tout convertir en array pour vitesse, size n'est jamais mod dans programme
+	}
+	return res;
+}
+
+Layer  Network::vectSub(const Layer& tab1,const Layer& tab2) const
+{
+	assert(tab1.size() == tab2.size());
+	Layer res;
+	for(size_t i(0); i < tab1.size(); ++i){
+		res.push_back(tab1[i] - tab2[i]);			//devrait tout convertir en array pour vitesse, size n'est jamais mod dans programme
+	}
+	return res;
+}
+
+
+
+void   Network::afficheVect(const Layer& tab) const
+{
+	for(auto i: tab){
+		std::cout << i << " ";
+	}
+	std::cout << std::endl;
+}
+
+double   Network::sigmoid(double valeur) const
+{ 
+	if(valeur > 1e+10){
+		std::cerr << "val:" << valeur << std::endl;
+		valeur = 1e+10;
+		throw std::string("out of bounds activation");
+	}
+	double temp(0.0);
+	temp = 1 / (1 + exp(-valeur));
+	assert(temp <= 1.0 and temp >= 0.0);
+	return temp;
+}
+
+double  Network::deriveeSigmoid(double valeur) const
+{
+	return sigmoid(valeur) * (1 - sigmoid(valeur));
+}
+
+int  Network::newInt(std::vector<int>& deja_tires) const
+{
+	if(deja_tires.size() >= data_size_) deja_tires.clear();
+	std::uniform_int_distribution<> dint(0,data_size_-1);	//on veut tirer au hasard dans les données pour ne pas tirer les données dans l'ordre
+	double index1(0.0);
+	bool isNew(false);
+	
+	while(!isNew){
+		index1 = dint(gen);
+		isNew = true;
+		for(size_t i(0); i < deja_tires.size(); ++i){
+			if(deja_tires[i] == index1) isNew = false;
+		}
+		deja_tires.push_back(index1);
+	}
+	std::cout << "randstep: " << index1 << std::endl;
+	return index1;
+}
+
 MatriceFixe Network::getActivations() const
 {
 	return neurons_;
@@ -91,7 +210,7 @@ void Network::readWholeInput(std::ifstream& inputFile)
 		inputFile >> temp2;		//parsing the last information, the name of the flower
 		
 		double temp3(0.0);
-		temp3 = Utilities.flowerTypeToDouble(temp2);
+		temp3 = flowerTypeToDouble(temp2);
 		Layer temp_vec(3,0.0);		//push back un vect avec un "1" à la bonne position
 		temp_vec[temp3] += 1;
 		correctOutputs_.push_back(temp_vec);
@@ -142,12 +261,9 @@ void Network::run()
 
 void Network::update(std::ofstream& errorsFile, std::vector<std::ofstream>& weightFiles, int step, std::vector<int>& deja_tires)
 {	
-	int randomStep(0);
-	randomStep = Utilities::newInt(deja_tires, data_size_);	//newInt nous donne une valeur que l'on a pas encore tiré entre 0 et 99
+	int randomStep = newInt(deja_tires);	//newInt nous donne une valeur que l'on a pas encore tiré entre 0 et 149
 
-	for(size_t j(0); j < _NB_INPUTS_; ++j){
-		neurons_[0][j] = wholeData_[randomStep].first[j];
-	}
+	neurons_[0] = wholeData_[randomStep].first;
 	
 	for(size_t i(0); i < neurons_.size() - 1; ++i){
 		activateLayer(i);
@@ -163,8 +279,8 @@ void Network::update(std::ofstream& errorsFile, std::vector<std::ofstream>& weig
 		errorsFile << delta_final_scal_ << '\n';
 	}
 	
-	std::cout << "out corr: "; Utilities::afficheVect(correctOutputs_[randomStep]);
-	Utilities::afficheVect(neurons_[_NB_LAYERS_-1]);
+	std::cout << "out corr: ";   afficheVect(correctOutputs_[randomStep]);
+	  afficheVect(neurons_[_NB_LAYERS_-1]);
 	std::cout << std::endl;
 	
 }
@@ -186,7 +302,7 @@ void Network::displayLoadingBar(int i) const
 
 void Network::calculateDeltas(int randomStep)
 {
-	deltas_[_NB_LAYERS_ - 1] = Utilities::vectSub(correctOutputs_[randomStep],neurons_[_NB_LAYERS_ - 1]); //calcule le dernier layer
+	deltas_[_NB_LAYERS_ - 1] =   vectSub(correctOutputs_[randomStep],neurons_[_NB_LAYERS_ - 1]); //calcule le dernier layer
 	calculate_delta_final_scal();		//least squares scalar value
 	for(size_t i(_NB_LAYERS_ - 1); i > 1 ; --i){	//layer 0 is input layer so no need to compute deltas
 		deltaLayer(i);
@@ -194,7 +310,7 @@ void Network::calculateDeltas(int randomStep)
 }
 
 void Network::calculate_delta_final_scal(){
-	delta_final_scal_ = sqrt(Utilities::prodScal(deltas_[_NB_LAYERS_-1],deltas_[_NB_LAYERS_-1]))/_NB_OUTPUTS_;
+	delta_final_scal_ = sqrt(prodScal(deltas_[_NB_LAYERS_-1],deltas_[_NB_LAYERS_-1]))/_NB_OUTPUTS_;
 	//std::cout <<"d: " << delta_final_scal_ << std::endl;
 }
 
@@ -209,7 +325,7 @@ void Network::deltaLayer(int index)
 		for(size_t j(0); j < neurons_[index].size(); ++j){	
 			temp_tab.push_back(weights_[index - 1][j][i]);
 		}
-		deltas_[index - 1][i] = Utilities::prodScal(tab1, temp_tab);
+		deltas_[index - 1][i] =   prodScal(tab1, temp_tab);
 		temp_tab.clear();
 	}
 }	
@@ -217,7 +333,7 @@ void Network::deltaLayer(int index)
 void Network::activateLayer(int index)
 {
 	for(size_t i(0); i < neurons_[index + 1].size(); ++i){	
-		neurons_[index + 1][i] = Utilities::sigmoid(Utilities::prodScal(neurons_[index],  weights_[index][i]) + bias_[index][i]);	//SUPER GROSSE ERREUR -> BIAS DANS SIGMOID!!!
+		neurons_[index + 1][i] =   sigmoid(prodScal(neurons_[index],  weights_[index][i]) + bias_[index][i]);	//SUPER GROSSE ERREUR -> BIAS DANS SIGMOID!!!
 	}
 }
 
@@ -228,7 +344,7 @@ void Network::updateWeights()			//cette fonction cause PAS segfault, mais value 
 	for(size_t i(0); i < weights_.size(); ++i){
 		for(size_t j(0); j < weights_[i].size(); ++j){
 			for(size_t k(0); k < weights_[i][j].size(); ++k){
-				weights_[i][j][k] += eta_ * Utilities::sum(Utilities::prodElement(deltas_[i+1],reArrangeVect(i,k)))/deltas_[i+1].size() * Utilities::deriveeSigmoid(neurons_[i][k]) * neurons_[i][k];
+				weights_[i][j][k] += eta_ *   sum(prodElement(deltas_[i+1],reArrangeVect(i,k)))/deltas_[i+1].size() *   deriveeSigmoid(neurons_[i][k]) * neurons_[i][k];
 				if( weights_[i][j][k] < -100 or weights_[i][j][k] > 100){
 					std::cerr << "w: " << weights_[i][j][k] << std::endl;
 				}
@@ -245,7 +361,7 @@ void Network::updateBiases()
 	for(size_t i(0); i < _NB_LAYERS_-1; ++i){
 		for(size_t j(0); j < neurons_[i + 1].size(); ++j){
 			//bias_[0][j] += eta_ * deltas_[1][j] * deriveeSigmoid(neurons_[1][j]);	//version for scalar output -> works correctly!!
-			bias_[i][j] += eta_ * Utilities::sum(Utilities::prodElement(deltas_[i+1],reArrangeVect(i,j)))/deltas_[i+1].size() * Utilities::deriveeSigmoid(neurons_[1][j]);	//dernière version, 80% confident que correct avant aout
+			bias_[i][j] += eta_ *   sum(  prodElement(deltas_[i+1],reArrangeVect(i,j)))/deltas_[i+1].size() *   deriveeSigmoid(neurons_[1][j]);	//dernière version, 80% confident que correct avant aout
 			//bias_[h][j] += eta_ * sum(prodElement(deltas_[h+1],weights_[h+1][j]))/deltas_[h+1].size() * deriveeSigmoid(neurons_[1][j]);//pb pck maps connections the wrong way (avant rearrangement)
 		}
 	}
@@ -263,6 +379,7 @@ Layer Network::reArrangeVect(int indexLayer, int indexTargetNeur) const
 Network::Network(unsigned int iterations_tot, double learningRate)
 :eta_(learningRate), iterations_tot_(iterations_tot), delta_final_scal_(0.0), data_size_(0)
 {
+	
 	for(size_t i(0); i < _NB_INPUTS_; ++i){
 		neurons_[0].push_back(0.0);
 	}	
