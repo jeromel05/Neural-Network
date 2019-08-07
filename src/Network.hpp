@@ -51,7 +51,7 @@ public:
 	Matrice getCorrectOutput()  const;
 	double sigmoid(double valeur) const ;
 	double deriveeSigmoid(double valeur) const ;
-	bool checkActivationBounds(double valeur)  const;
+	bool checkActivationBounds(double valeur) const;
 	double flowerTypeToDouble(const std::string& type1) const ;
 	int newInt(std::vector<int>& deja_tires) const ;
 	double sum(const  std::vector<double>& tab1)  const;

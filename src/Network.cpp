@@ -23,6 +23,7 @@ double Network::flowerTypeToDouble(const std::string& type1) const
 	}
 }
 
+
 Layer Network::prodElement(const Layer& tab1, const Layer& tab2) const
 {
 	assert(tab1.size() == tab2.size());
